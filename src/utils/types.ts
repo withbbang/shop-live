@@ -5,6 +5,7 @@ export interface Card {
   width: number;
   height: number;
   color: string;
+  isMoving: boolean;
   isFirst: boolean;
 }
 

@@ -2,10 +2,8 @@ import { useCallback, useState } from 'react';
 import { KeyValueForm } from './types';
 
 /**
- * [input, textarea, select tag 훅]
- *
+ * input, textarea, select tag 훅
  * @param {KeyValueForm} keyValueForm key - value 객체
- * @returns
  */
 export function useChangeHook(keyValueForm: KeyValueForm) {
   const [form, setForm] = useState<KeyValueForm>(keyValueForm);

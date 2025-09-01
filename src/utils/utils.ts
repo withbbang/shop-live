@@ -23,21 +23,22 @@ export function createRandomColor(): string {
  * @returns {CARD} 카드
  */
 export function createCard(pos: CardPosition, isFirst: boolean): Card {
-  if (pos === 'top') {
+  if (pos === 'top')
     return {
       width: TOP_CARD_WIDTH,
       height: TOP_CARD_HEIGHT,
       color: createRandomColor(),
+      isMoving: false,
       isFirst,
     };
-  } else {
+  else
     return {
       width: BOTTOM_CARD_WIDTH,
       height: BOTTOM_CARD_HEIGHT,
       color: createRandomColor(),
+      isMoving: false,
       isFirst,
     };
-  }
 }
 
 /**

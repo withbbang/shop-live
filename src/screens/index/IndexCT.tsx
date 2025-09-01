@@ -15,7 +15,7 @@ function IndexCT({}: IndexCTProps): React.JSX.Element {
 
   useEffect(() => {
     // 카드 초기화
-    [0, 0, 0].forEach((_, idx) => {
+    [0, 0].forEach((_, idx) => {
       setTopCards((prev) => [...prev, createCard('top', idx === 0)]);
       setBottomCards((prev) => [...prev, createCard('bottom', idx === 0)]);
     });
@@ -27,9 +27,12 @@ function IndexCT({}: IndexCTProps): React.JSX.Element {
    */
   const handleResetCard = (pos: CardPosition) => {
     if (pos === 'top')
-      setTopCards((prev) => [...prev.slice(1), createCard('top', false)]);
+      setTopCards((prev) => [createCard('top', false), ...prev.slice(1, 1)]);
     else
-      setBottomCards((prev) => [...prev.slice(1), createCard('bottom', false)]);
+      setBottomCards((prev) => [
+        createCard('bottom', false),
+        ...prev.slice(1, 1),
+      ]);
   };
 
   return <IndexPT topCards={topCards} bottomCards={bottomCards} />;
