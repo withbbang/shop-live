@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  shop-live:
+    container_name: shop-live
+    image: withbbang/shop-live
+    build:
+      context: ./shop-live
+      dockerfile: Dockerfile
+    ports:
+      - '[port]:80'
+    networks:
+      - shop-live
+    volumes:
+      - [path]
+    environment:
+      - TZ=Asia/Seoul
+    restart: always
+
+networks:
+  shop-live:
+    driver: bridge
