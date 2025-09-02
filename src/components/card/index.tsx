@@ -3,6 +3,7 @@ import { PropState } from 'middlewares/configureReducer';
 import { connect } from 'react-redux';
 import {
   CommonState,
+  useSetBottomStatus,
   useSetTopStatus,
 } from 'middlewares/reduxToolkits/commonSlice';
 import { Action } from 'redux-saga';
@@ -27,7 +28,7 @@ const mapDispatchToProps = (dispatch: (actionFunction: Action<any>) => any) => {
       dispatch(useSetTopStatus(payload));
     },
     useSetBottomStatus: (payload: { bottomStatus: CardStatusType }): void => {
-      dispatch(useSetTopStatus(payload));
+      dispatch(useSetBottomStatus(payload));
     },
   };
 };
@@ -39,6 +40,8 @@ function Card({
   height,
   idx,
   onResetCard,
+  useSetTopStatus,
+  useSetBottomStatus,
 }: CardProps): React.JSX.Element {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const { form, setForm } = useChangeHook({
@@ -83,6 +86,17 @@ function Card({
       translateX: dx,
       isSwiped: Math.abs(dx) > 3 ? true : false,
     }));
+
+    if (dx > 0) {
+      if (position === 'top') useSetTopStatus({ topStatus: 'SWIPE RIGHT' });
+      else useSetBottomStatus({ bottomStatus: 'SWIPE RIGHT' });
+    } else if (dx < 0) {
+      if (position === 'top') useSetTopStatus({ topStatus: 'SWIPE LEFT' });
+      else useSetBottomStatus({ bottomStatus: 'SWIPE LEFT' });
+    } else {
+      if (position === 'top') useSetTopStatus({ topStatus: 'CANCEL' });
+      else useSetBottomStatus({ bottomStatus: 'CANCEL' });
+    }
   };
 
   /**
@@ -95,13 +109,24 @@ function Card({
       isSwiping: false,
     }));
 
-    if (Math.abs(+form.translateX) >= width / 2)
+    if (Math.abs(+form.translateX) >= width / 2) {
       onResetCard(position); // 스와이프 거리가 카드의 1/2 이상이면 카드 리셋
-    else
+      if (position === 'top')
+        useSetTopStatus({
+          topStatus: +form.translateX > 0 ? 'TO RIGHT' : 'TO LEFT',
+        });
+      else
+        useSetBottomStatus({
+          bottomStatus: +form.translateX > 0 ? 'TO RIGHT' : 'TO LEFT',
+        });
+    } else {
       setForm((prevState: KeyValueFormType) => ({
         ...prevState,
         translateX: 0,
       }));
+      if (position === 'top') useSetTopStatus({ topStatus: 'CANCEL' });
+      else useSetBottomStatus({ bottomStatus: 'CANCEL' });
+    }
   };
 
   /**
@@ -124,9 +149,6 @@ function Card({
         width,
         height,
         background: color,
-        borderRadius: '8px',
-        userSelect: 'none',
-        cursor: 'grab',
       }}
       onClick={handleClick}
       onMouseDown={handleDown}
@@ -145,6 +167,8 @@ interface CardProps extends CommonState {
   height: number;
   idx: number;
   onResetCard: (pos: CardPositionType) => void;
+  useSetTopStatus: (payload: { topStatus: CardStatusType }) => void;
+  useSetBottomStatus: (payload: { bottomStatus: CardStatusType }) => void;
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Card);

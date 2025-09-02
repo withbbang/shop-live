@@ -1,17 +1,9 @@
 .wrap {
   position: absolute;
-  width: 16rem; // 256px
-  height: 24rem; // 384px
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 1rem;
-  box-shadow:
-    0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  background-color: #fff;
-  font-size: 1.25rem;
-  font-weight: 700;
-  cursor: grab;
+  font-weight: bold;
   user-select: none;
+  cursor: grab;
 }
