@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PropState } from 'middlewares/configureReducer';
 import { connect } from 'react-redux';
 import {
@@ -14,6 +14,7 @@ import {
   KeyValueFormType,
 } from 'utils/types';
 import { callCustomAlert } from 'utils/utils';
+import { AUTO_SWIPE_TIME } from 'utils/constants';
 import styles from './Card.module.scss';
 
 const mapStateToProps = (state: PropState): CommonState => {
@@ -34,6 +35,8 @@ const mapDispatchToProps = (dispatch: (actionFunction: Action<any>) => any) => {
 };
 
 function Card({
+  topStatus,
+  bottomStatus,
   position,
   color,
   width,
@@ -43,7 +46,14 @@ function Card({
   useSetTopStatus,
   useSetBottomStatus,
 }: CardProps): React.JSX.Element {
-  const cardRef = useRef<HTMLDivElement | null>(null);
+  const [topTimeout, setTopTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [topInterval, setTopInterval] = useState<NodeJS.Timeout | null>(null);
+  const [bottomTimeout, setBottomTimeout] = useState<NodeJS.Timeout | null>(
+    null,
+  );
+  const [bottomInterval, setBottomInterval] = useState<NodeJS.Timeout | null>(
+    null,
+  );
   const { form, setForm } = useChangeHook({
     isSwiping: false, // 스와이프 진행 여부
     isSwiped: false, // 스와이프 여부 추적
@@ -51,18 +61,14 @@ function Card({
     translateX: 0, // 스와이프 이동 거리
   });
 
-  useEffect(() => {
-    if (cardRef.current && idx === 0) {
-      //TODO: 3초간 아무런 동작 없을 시 AUTO TRANSITION 모드로 진행하도록 세팅
-    }
-  }, [cardRef]);
-
   /**
-   * 클릭/터치 시작
+   * 스와이프 시작
    * @param {React.MouseEvent} e 마우스 이벤트
    * @returns {void}
    */
   const handleDown = (e: React.MouseEvent) => {
+    handleClearTimer();
+
     setForm((prevState: KeyValueFormType) => ({
       ...prevState,
       isSwiping: true,
@@ -72,7 +78,7 @@ function Card({
   };
 
   /**
-   * 클릭/터치 중
+   * 스와이프 중
    * @param {React.MouseEvent} e 마우스 이벤트
    * @returns {void}
    */
@@ -93,14 +99,11 @@ function Card({
     } else if (dx < 0) {
       if (position === 'top') useSetTopStatus({ topStatus: 'SWIPE LEFT' });
       else useSetBottomStatus({ bottomStatus: 'SWIPE LEFT' });
-    } else {
-      if (position === 'top') useSetTopStatus({ topStatus: 'CANCEL' });
-      else useSetBottomStatus({ bottomStatus: 'CANCEL' });
     }
   };
 
   /**
-   * 클릭/터치 종료
+   * 스와이프 종료
    * @returns {void}
    */
   const handleUp = () => {
@@ -109,8 +112,9 @@ function Card({
       isSwiping: false,
     }));
 
+    // 스와이프 거리가 카드의 1/2 이상이면 카드 리셋
     if (Math.abs(+form.translateX) >= width / 2) {
-      onResetCard(position); // 스와이프 거리가 카드의 1/2 이상이면 카드 리셋
+      onResetCard(position);
       if (position === 'top')
         useSetTopStatus({
           topStatus: +form.translateX > 0 ? 'TO RIGHT' : 'TO LEFT',
@@ -127,6 +131,8 @@ function Card({
       if (position === 'top') useSetTopStatus({ topStatus: 'CANCEL' });
       else useSetBottomStatus({ bottomStatus: 'CANCEL' });
     }
+
+    handleSetCardDefault();
   };
 
   /**
@@ -135,13 +141,72 @@ function Card({
    */
   const handleClick = () => {
     if (!!form.isSwiped) return; // 드래그 중일시 클릭 무시
+
+    handleClearTimer();
+
     callCustomAlert(color);
+
+    if (position === 'top') useSetTopStatus({ topStatus: 'CLICK' });
+    else useSetBottomStatus({ bottomStatus: 'CLICK' });
+
+    handleSetCardDefault();
+  };
+
+  /**
+   * 3초 후 카드 상태 설정
+   */
+  const handleSetCardDefault = () => {
+    if (position === 'top') {
+      const timer = setTimeout(() => {
+        useSetTopStatus({ topStatus: 'AUTO TRANSITION' });
+
+        const interval = setInterval(
+          () => onResetCard(position),
+          AUTO_SWIPE_TIME,
+        );
+
+        onResetCard(position);
+        setTopInterval(interval);
+      }, AUTO_SWIPE_TIME);
+
+      setTopTimeout(timer);
+    } else if (position === 'bottom') {
+      const timer = setTimeout(() => {
+        useSetBottomStatus({ bottomStatus: 'AUTO TRANSITION' });
+
+        const interval = setInterval(
+          () => onResetCard(position),
+          AUTO_SWIPE_TIME,
+        );
+
+        onResetCard(position);
+        setBottomInterval(interval);
+      }, AUTO_SWIPE_TIME);
+
+      setBottomTimeout(timer);
+    }
+  };
+
+  /**
+   * 타이머 클리어
+   */
+  const handleClearTimer = () => {
+    if (position === 'top') {
+      clearTimeout(topTimeout as NodeJS.Timeout);
+      clearInterval(topInterval as NodeJS.Timeout);
+      setTopTimeout(null);
+      setTopInterval(null);
+    } else if (position === 'bottom') {
+      clearTimeout(bottomTimeout as NodeJS.Timeout);
+      clearInterval(bottomInterval as NodeJS.Timeout);
+      setBottomTimeout(null);
+      setBottomInterval(null);
+    }
   };
 
   return (
     <div
       className={styles.wrap}
-      ref={idx != 0 ? cardRef : null}
       style={{
         transform: `translateX(${+form.translateX}px)`,
         transition: !!form.isSwiping ? 'none' : 'transform 0.3s ease',
