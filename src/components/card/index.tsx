@@ -1,8 +1,36 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { PropState } from 'middlewares/configureReducer';
+import { connect } from 'react-redux';
+import {
+  CommonState,
+  useSetTopStatus,
+} from 'middlewares/reduxToolkits/commonSlice';
+import { Action } from 'redux-saga';
 import { useChangeHook } from 'utils/hooks';
-import { CardPositionType, KeyValueFormType } from 'utils/types';
+import {
+  CardPositionType,
+  CardStatusType,
+  KeyValueFormType,
+} from 'utils/types';
 import { callCustomAlert } from 'utils/utils';
 import styles from './Card.module.scss';
+
+const mapStateToProps = (state: PropState): CommonState => {
+  return {
+    ...state.common,
+  };
+};
+
+const mapDispatchToProps = (dispatch: (actionFunction: Action<any>) => any) => {
+  return {
+    useSetTopStatus: (payload: { topStatus: CardStatusType }): void => {
+      dispatch(useSetTopStatus(payload));
+    },
+    useSetBottomStatus: (payload: { bottomStatus: CardStatusType }): void => {
+      dispatch(useSetTopStatus(payload));
+    },
+  };
+};
 
 function Card({
   position,
@@ -19,6 +47,12 @@ function Card({
     startX: 0, // 스와이프 시작 위치
     translateX: 0, // 스와이프 이동 거리
   });
+
+  useEffect(() => {
+    if (cardRef.current && idx === 0) {
+      //TODO: 3초간 아무런 동작 없을 시 AUTO TRANSITION 모드로 진행하도록 세팅
+    }
+  }, [cardRef]);
 
   /**
    * 클릭/터치 시작
@@ -104,7 +138,7 @@ function Card({
   );
 }
 
-interface CardProps {
+interface CardProps extends CommonState {
   position: CardPositionType;
   color: string;
   width: number;
@@ -113,4 +147,4 @@ interface CardProps {
   onResetCard: (pos: CardPositionType) => void;
 }
 
-export default Card;
+export default connect(mapStateToProps, mapDispatchToProps)(Card);
