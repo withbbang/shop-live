@@ -1,22 +1,19 @@
 /**
  * 카드
  */
-export interface Card {
-  width: number;
-  height: number;
+export interface CardType {
+  id: string;
   color: string;
-  isMoving: boolean;
-  isFirst: boolean;
 }
 
 /**
  * 카드 위치
  */
-export type CardPosition = 'top' | 'bottom';
+export type CardPositionType = 'top' | 'bottom';
 
 /**
  * key-value form
  */
-export interface KeyValueForm {
+export interface KeyValueFormType {
   [key: string]: number | string | boolean;
 }

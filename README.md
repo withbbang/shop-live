@@ -19,6 +19,7 @@
 ### Local Test
 
 ```sh
+$ npm i
 $ npm run local
 ```
 
