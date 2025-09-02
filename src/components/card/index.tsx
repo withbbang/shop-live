@@ -15,6 +15,7 @@ function Card({
   const cardRef = useRef<HTMLDivElement | null>(null);
   const { form, setForm } = useChangeHook({
     isSwiping: false, // 스와이프 진행 여부
+    isSwiped: false, // 스와이프 여부 추적
     startX: 0, // 스와이프 시작 위치
     translateX: 0, // 스와이프 이동 거리
   });
@@ -28,6 +29,7 @@ function Card({
     setForm((prevState: KeyValueFormType) => ({
       ...prevState,
       isSwiping: true,
+      isSwiped: false, // 새 스와이프 시작
       startX: e.clientX,
     }));
   };
@@ -40,9 +42,12 @@ function Card({
   const handleMove = (e: React.MouseEvent) => {
     if (!!!form.isSwiping) return;
 
+    const dx = e.clientX - +form.startX;
+
     setForm((prevState: KeyValueFormType) => ({
       ...prevState,
-      translateX: e.clientX - +form.startX,
+      translateX: dx,
+      isSwiped: Math.abs(dx) > 3 ? true : false,
     }));
   };
 
@@ -51,7 +56,10 @@ function Card({
    * @returns {void}
    */
   const handleUp = () => {
-    if (!!!form.isSwiping) return;
+    setForm((prevState: KeyValueFormType) => ({
+      ...prevState,
+      isSwiping: false,
+    }));
 
     if (Math.abs(+form.translateX) >= width / 2)
       onResetCard(position); // 스와이프 거리가 카드의 1/2 이상이면 카드 리셋
@@ -60,11 +68,6 @@ function Card({
         ...prevState,
         translateX: 0,
       }));
-
-    setForm((prevState: KeyValueFormType) => ({
-      ...prevState,
-      isSwiping: false,
-    }));
   };
 
   /**
@@ -72,6 +75,7 @@ function Card({
    * @returns {void}
    */
   const handleClick = () => {
+    if (!!form.isSwiped) return; // 드래그 중일시 클릭 무시
     callCustomAlert(color);
   };
 

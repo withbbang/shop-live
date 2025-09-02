@@ -2,20 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { CommonState } from 'middlewares/reduxToolkits/commonSlice';
 import { CardType, CardPositionType } from 'utils/types';
 import { createCard } from 'utils/utils';
-import { useChangeHook } from 'utils/hooks';
 import IndexPT from './IndexPT';
 
-function IndexCT({}: IndexCTProps): React.JSX.Element {
+function IndexCT({ topStatus, bottomStatus }: IndexCTProps): React.JSX.Element {
   const [topCards, setTopCards] = useState<CardType[]>([]); // 위 카드 리스트
   const [bottomCards, setBottomCards] = useState<CardType[]>([]); // 아래 카드 리스트
-  const { form, setForm } = useChangeHook({
-    topStatus: 'AUTO TRANSITION', // 위 카드 상태
-    bottomStatus: 'AUTO TRANSITION', // 아래 카드 상태
-  });
 
   useEffect(() => {
     // 카드 초기화
-    [0, 0].forEach((_, idx) => {
+    [0, 0].forEach(() => {
       setTopCards((prev) => [...prev, createCard()]);
       setBottomCards((prev) => [...prev, createCard()]);
     });
@@ -32,6 +27,8 @@ function IndexCT({}: IndexCTProps): React.JSX.Element {
 
   return (
     <IndexPT
+      topStatus={topStatus}
+      bottomStatus={bottomStatus}
       topCards={topCards}
       bottomCards={bottomCards}
       onResetCard={handleResetCard}
