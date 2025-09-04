@@ -199,7 +199,11 @@ function Card({
 
   return (
     <div
-      className={styles.wrap}
+      className={
+        idx !== 0 && cardStatus === 'AUTO TRANSITION'
+          ? [styles.wrap, styles.swipe].join(' ')
+          : styles.wrap
+      }
       style={{
         transform: `translateX(${+form.translateX}px)`,
         transition: !!form.isSwiping ? 'none' : 'transform 0.3s ease',
