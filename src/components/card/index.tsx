@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PropState } from 'middlewares/configureReducer';
 import { connect } from 'react-redux';
 import {
@@ -46,7 +46,8 @@ function Card({
   useSetTopStatus,
   useSetBottomStatus,
 }: CardProps): React.JSX.Element {
-  const cardStatus = useRef<CardStatusType>('AUTO TRANSITION'); // 카드 상태
+  const [cardStatus, setCardStatus] =
+    useState<CardStatusType>('AUTO TRANSITION'); // 카드 상태
   const startXRef = useRef(0); // Flip을 위한 스와이프 시작 위치
   const startTimeRef = useRef(0); // Flip을 위한 스와이프 시작 시간
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -60,22 +61,16 @@ function Card({
   useEffect(() => {
     if (idx === 0) return;
 
-    if (
-      cardStatus.current === 'SWIPE LEFT' ||
-      cardStatus.current === 'SWIPE RIGHT'
-    ) {
+    if (cardStatus === 'SWIPE LEFT' || cardStatus === 'SWIPE RIGHT') {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = undefined;
-    } else if (cardStatus.current === 'AUTO TRANSITION') {
-      timeoutRef.current = setTimeout(() => {
-        onResetCard(position);
-      }, AUTO_SWIPE_TIME);
     } else {
       timeoutRef.current = setTimeout(() => {
-        if (position === 'top')
+        if (position === 'top' && topStatus !== 'AUTO TRANSITION')
           useSetTopStatus({ topStatus: 'AUTO TRANSITION' });
-        else useSetBottomStatus({ bottomStatus: 'AUTO TRANSITION' });
-        cardStatus.current = 'AUTO TRANSITION';
+        if (position === 'bottom' && bottomStatus !== 'AUTO TRANSITION')
+          useSetBottomStatus({ bottomStatus: 'AUTO TRANSITION' });
+        if (cardStatus !== 'AUTO TRANSITION') setCardStatus('AUTO TRANSITION');
         onResetCard(position);
       }, AUTO_SWIPE_TIME);
     }
@@ -122,11 +117,11 @@ function Card({
     if (dx > 0) {
       if (position === 'top') useSetTopStatus({ topStatus: 'SWIPE RIGHT' });
       else useSetBottomStatus({ bottomStatus: 'SWIPE RIGHT' });
-      cardStatus.current = 'SWIPE RIGHT';
+      setCardStatus('SWIPE RIGHT');
     } else if (dx < 0) {
       if (position === 'top') useSetTopStatus({ topStatus: 'SWIPE LEFT' });
       else useSetBottomStatus({ bottomStatus: 'SWIPE LEFT' });
-      cardStatus.current = 'SWIPE LEFT';
+      setCardStatus('SWIPE LEFT');
     }
   };
 
@@ -149,31 +144,31 @@ function Card({
 
     // Flip 조건
     if (speed > SPEED_THRESHOLD) {
-      onResetCard(position);
-
       if (+form.translateX > 0) {
         if (position === 'top') useSetTopStatus({ topStatus: 'FLIP RIGHT' });
         else useSetBottomStatus({ bottomStatus: 'FLIP RIGHT' });
-        cardStatus.current = 'FLIP RIGHT';
+        setCardStatus('FLIP RIGHT');
       } else {
         if (position === 'top') useSetTopStatus({ topStatus: 'FLIP LEFT' });
         else useSetBottomStatus({ bottomStatus: 'FLIP LEFT' });
-        cardStatus.current = 'FLIP LEFT';
+        setCardStatus('FLIP LEFT');
       }
+
+      onResetCard(position);
     }
     // 스와이프 거리가 카드의 1/2 이상이면 카드 리셋
     else if (Math.abs(+form.translateX) >= width / 2) {
-      onResetCard(position);
-
       if (+form.translateX > 0) {
         if (position === 'top') useSetTopStatus({ topStatus: 'TO RIGHT' });
         else useSetBottomStatus({ bottomStatus: 'TO RIGHT' });
-        cardStatus.current = 'TO RIGHT';
+        setCardStatus('TO RIGHT');
       } else {
         if (position === 'top') useSetTopStatus({ topStatus: 'TO LEFT' });
         else useSetBottomStatus({ bottomStatus: 'TO LEFT' });
-        cardStatus.current = 'TO LEFT';
+        setCardStatus('TO LEFT');
       }
+
+      onResetCard(position);
     }
     // 제자리
     else {
@@ -184,7 +179,7 @@ function Card({
 
       if (position === 'top') useSetTopStatus({ topStatus: 'CANCEL' });
       else useSetBottomStatus({ bottomStatus: 'CANCEL' });
-      cardStatus.current = 'CANCEL';
+      setCardStatus('CANCEL');
     }
   };
 
@@ -199,7 +194,7 @@ function Card({
 
     if (position === 'top') useSetTopStatus({ topStatus: 'CLICK' });
     else useSetBottomStatus({ bottomStatus: 'CLICK' });
-    cardStatus.current = 'CLICK';
+    setCardStatus('CLICK');
   };
 
   return (
