@@ -5,3 +5,4 @@ export const BOTTOM_CARD_WIDTH = 150; // 아래 카드 가로
 export const BOTTOM_CARD_HEIGHT = 100; // 아래 카드 세로
 
 export const AUTO_SWIPE_TIME = 3000; // 유저 동작 안 하는 시간(3초)
+export const SPEED_THRESHOLD = 0.5; // Flip 기준 속도 px/ms (조절 가능)
