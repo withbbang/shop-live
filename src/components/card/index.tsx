@@ -61,10 +61,13 @@ function Card({
   useEffect(() => {
     if (idx === 0) return;
 
+    // 스와이프 중일 땐 clear
     if (cardStatus === 'SWIPE LEFT' || cardStatus === 'SWIPE RIGHT') {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = undefined;
-    } else {
+    }
+    // 그 외엔 AUTO TRANSITION으로 설정 (단, 이미 AUTO TRANSITION 상태면 설정 X)
+    else {
       timeoutRef.current = setTimeout(() => {
         if (position === 'top' && topStatus !== 'AUTO TRANSITION')
           useSetTopStatus({ topStatus: 'AUTO TRANSITION' });
@@ -93,7 +96,7 @@ function Card({
     setForm((prevState: KeyValueFormType) => ({
       ...prevState,
       isSwiping: true,
-      isSwiped: false, // 새 스와이프 시작
+      isSwiped: false,
       startX: e.clientX,
     }));
   };
@@ -114,6 +117,7 @@ function Card({
       isSwiped: Math.abs(dx) > 3 ? true : false,
     }));
 
+    // 스와이프 방향 설정
     if (dx > 0) {
       if (position === 'top') useSetTopStatus({ topStatus: 'SWIPE RIGHT' });
       else useSetBottomStatus({ bottomStatus: 'SWIPE RIGHT' });
@@ -142,7 +146,11 @@ function Card({
       isSwiping: false,
     }));
 
-    // Flip 조건
+    /**
+     * if: 속도가 SPEED_THRESHOLD 이상이면 Flip
+     * else if: 스와이프 거리가 카드의 1/2 이상이면 카드 리셋
+     * else: 제자리
+     */
     if (speed > SPEED_THRESHOLD) {
       if (+form.translateX > 0) {
         if (position === 'top') useSetTopStatus({ topStatus: 'FLIP RIGHT' });
@@ -155,9 +163,7 @@ function Card({
       }
 
       onResetCard(position);
-    }
-    // 스와이프 거리가 카드의 1/2 이상이면 카드 리셋
-    else if (Math.abs(+form.translateX) >= width / 2) {
+    } else if (Math.abs(+form.translateX) >= width / 2) {
       if (+form.translateX > 0) {
         if (position === 'top') useSetTopStatus({ topStatus: 'TO RIGHT' });
         else useSetBottomStatus({ bottomStatus: 'TO RIGHT' });
@@ -169,9 +175,7 @@ function Card({
       }
 
       onResetCard(position);
-    }
-    // 제자리
-    else {
+    } else {
       setForm((prevState: KeyValueFormType) => ({
         ...prevState,
         translateX: 0,
