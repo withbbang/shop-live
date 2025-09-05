@@ -1,7 +1,7 @@
-if (import.meta.env.MODE === 'production') {
+if (import.meta.env.VITE_MODE === 'production') {
   console.debug = () => {};
   console.log = () => {};
-  console.info = () => {};
-  console.warn = () => {};
-  // except console.error
+  // console.info = () => {};
+  // console.warn = () => {};
+  // console.error = () => {};
 }

@@ -1,4 +1,4 @@
-import './console'; // 최상단
+import './console'; // 최상단에 붙여야 빌드할 때 적용돼서 콘솔들 기능 제거됨
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
