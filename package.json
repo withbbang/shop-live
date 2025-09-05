@@ -6,7 +6,7 @@
     "local": "vite",
     "build:dev": "env-cmd -f .env.development vite build --mode development",
     "build:prod": "env-cmd -f .env.production vite build --mode production",
-    "build": "env-cmd -f .env.production vite build --mode production",
+    "build": "vite build --mode production",
     "serve": "vite preview",
     "serve-build": "npm run build && vite preview",
     "test": "echo \"Error: no test specified\" && exit 1"
