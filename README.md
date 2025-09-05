@@ -4,6 +4,7 @@
 
 **_- TYPESCRIPT_**<br>
 **_- REACT v19_**<br>
+**_- REDUXTOOLKIT_**<br>
 **_- VITE_**<br>
 **_- DOCKER_**<br>
 **_- NGINX_**
