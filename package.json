@@ -4,9 +4,9 @@
   "main": "index.js",
   "scripts": {
     "local": "vite",
-    "build:dev": "env-cmd -f .env.development vite build --mode development",
-    "build:prod": "env-cmd -f .env.production vite build --mode production",
-    "build": "vite build --mode production",
+    "build:dev": "cross-env VITE_MODE=development vite build",
+    "build:prod": "cross-env VITE_MODE=production vite build",
+    "build": "cross-env VITE_MODE=production vite build",
     "serve": "vite preview",
     "serve-build": "npm run build && vite preview",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -36,6 +36,7 @@
     "@types/redux-logger": "^3.0.13",
     "@vitejs/plugin-react": "^4.6.0",
     "@vitest/ui": "^3.2.4",
+    "cross-env": "^10.0.0",
     "env-cmd": "^10.1.0",
     "eslint": "^9.31.0",
     "eslint-config-prettier": "^10.1.5",
