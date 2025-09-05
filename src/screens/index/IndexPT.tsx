@@ -18,23 +18,28 @@ function IndexPT({
 }: IndexPTProps): React.JSX.Element {
   return (
     <div className={styles.wrap}>
-      <p>{topStatus}</p>
-      <CardBox
-        position={'top'}
-        cards={topCards}
-        width={TOP_CARD_WIDTH}
-        height={TOP_CARD_HEIGHT}
-        onResetCard={onResetCard}
-      />
+      <div className={styles.box}>
+        <p>{topStatus}</p>
+        <CardBox
+          position={'top'}
+          cards={topCards}
+          width={TOP_CARD_WIDTH}
+          height={TOP_CARD_HEIGHT}
+          onResetCard={onResetCard}
+        />
+      </div>
       <br />
-      <p>{bottomStatus}</p>
-      <CardBox
-        position={'bottom'}
-        cards={bottomCards}
-        width={BOTTOM_CARD_WIDTH}
-        height={BOTTOM_CARD_HEIGHT}
-        onResetCard={onResetCard}
-      />
+      <br />
+      <div className={styles.box}>
+        <p>{bottomStatus}</p>
+        <CardBox
+          position={'bottom'}
+          cards={bottomCards}
+          width={BOTTOM_CARD_WIDTH}
+          height={BOTTOM_CARD_HEIGHT}
+          onResetCard={onResetCard}
+        />
+      </div>
     </div>
   );
 }
