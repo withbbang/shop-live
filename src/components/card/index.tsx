@@ -48,6 +48,7 @@ function Card({
 }: CardProps): React.JSX.Element {
   const [cardStatus, setCardStatus] =
     useState<CardStatusType>('AUTO TRANSITION'); // 카드 상태
+  const cardRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0); // Flip을 위한 스와이프 시작 위치
   const startTimeRef = useRef(0); // Flip을 위한 스와이프 시작 시간
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -74,7 +75,7 @@ function Card({
         if (position === 'bottom' && bottomStatus !== 'AUTO TRANSITION')
           useSetBottomStatus({ bottomStatus: 'AUTO TRANSITION' });
         if (cardStatus !== 'AUTO TRANSITION') setCardStatus('AUTO TRANSITION');
-        onResetCard(position);
+        handleRemoveCardWithAnimation(position);
       }, AUTO_SWIPE_TIME);
     }
 
@@ -201,13 +202,32 @@ function Card({
     setCardStatus('CLICK');
   };
 
+  /**
+   * 카드 제거 애니메이션 실행 후 onResetCard 호출
+   */
+  const handleRemoveCardWithAnimation = (position: CardPositionType) => {
+    if (!cardRef.current) return;
+
+    const card = cardRef.current;
+
+    // transform + opacity transition 적용
+    card.style.transition = 'transform 0.5s ease, opacity 0.5s ease';
+    card.style.transform = `translateX(${width}px)`;
+    card.style.opacity = '0';
+
+    // transition 끝난 후 onResetCard 실행
+    const handleTransitionEnd = () => {
+      card.removeEventListener('transitionend', handleTransitionEnd);
+      onResetCard(position);
+    };
+
+    card.addEventListener('transitionend', handleTransitionEnd);
+  };
+
   return (
     <div
-      className={
-        idx !== 0 && cardStatus === 'AUTO TRANSITION'
-          ? [styles.wrap, styles.swipe].join(' ')
-          : styles.wrap
-      }
+      className={styles.wrap}
+      ref={cardRef}
       style={{
         transform: `translateX(${+form.translateX}px)`,
         transition: !!form.isSwiping ? 'none' : 'transform 0.3s ease',
