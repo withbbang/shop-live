@@ -51,7 +51,7 @@ function Card({
   const cardRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0); // Flip을 위한 스와이프 시작 위치
   const startTimeRef = useRef(0); // Flip을 위한 스와이프 시작 시간
-  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined); // AUTO TRANSITION을 위한 setTimeout 레퍼런스
   const { form, setForm } = useChangeHook({
     isSwiping: false, // 스와이프 진행 여부
     isSwiped: false, // 스와이프 여부 추적
@@ -87,30 +87,30 @@ function Card({
 
   /**
    * 스와이프 시작
-   * @param {React.MouseEvent} e 마우스 이벤트
+   * @param {number} clientX 이벤트 x 시작 좌표
    * @returns {void}
    */
-  const handleDown = (e: React.MouseEvent) => {
-    startXRef.current = e.clientX;
+  const handleDown = (clientX: number): void => {
+    startXRef.current = clientX;
     startTimeRef.current = Date.now();
 
     setForm((prevState: KeyValueFormType) => ({
       ...prevState,
       isSwiping: true,
       isSwiped: false,
-      startX: e.clientX,
+      startX: clientX,
     }));
   };
 
   /**
    * 스와이프 중
-   * @param {React.MouseEvent} e 마우스 이벤트
+   * @param {number} clientX 이벤트 x 좌표
    * @returns {void}
    */
-  const handleMove = (e: React.MouseEvent) => {
+  const handleMove = (clientX: number): void => {
     if (!!!form.isSwiping) return;
 
-    const dx = e.clientX - +form.startX;
+    const dx = clientX - +form.startX;
 
     setForm((prevState: KeyValueFormType) => ({
       ...prevState,
@@ -127,18 +127,22 @@ function Card({
       if (position === 'top') useSetTopStatus({ topStatus: 'SWIPE LEFT' });
       else useSetBottomStatus({ bottomStatus: 'SWIPE LEFT' });
       setCardStatus('SWIPE LEFT');
+    } else {
+      if (position === 'top') useSetTopStatus({ topStatus: 'CANCEL' });
+      else useSetBottomStatus({ bottomStatus: 'CANCEL' });
+      setCardStatus('CANCEL');
     }
   };
 
   /**
    * 스와이프 종료
+   * @param {number} clientX 이벤트 x 종료 좌표
    * @returns {void}
    */
-  const handleUp = (e: React.MouseEvent) => {
-    const endX = e.clientX; // 스와이프 종료 X 좌표
+  const handleUp = (clientX: number): void => {
     const endTime = Date.now(); // 스와이프 종료 시간
 
-    const dragDistance = endX - startXRef.current; // 스와이프 이동 거리
+    const dragDistance = clientX - startXRef.current; // 스와이프 이동 거리
     const duration = endTime - startTimeRef.current; // 스와이프 동안 걸린 시간
     const speed = Math.abs(dragDistance) / duration; // 스와이프 속도 px/ms
 
@@ -192,7 +196,7 @@ function Card({
    * 카드 클릭
    * @returns {void}
    */
-  const handleClick = () => {
+  const handleClick = (): void => {
     if (!!form.isSwiped) return; // 드래그 중일시 클릭 무시
 
     callCustomAlert(color);
@@ -215,14 +219,25 @@ function Card({
     card.style.transform = `translateX(${width}px)`;
     card.style.opacity = '0';
 
-    // transition 끝난 후 onResetCard 실행
+    // transition 끝난 후 transitionend 이벤트 제거 및 onResetCard 실행
     const handleTransitionEnd = () => {
       card.removeEventListener('transitionend', handleTransitionEnd);
       onResetCard(position);
     };
 
+    // transition 끝난 후 이벤트 실행
     card.addEventListener('transitionend', handleTransitionEnd);
   };
+
+  const hadleMouseDown = (e: React.MouseEvent) => handleDown(e.clientX);
+  const handleMouseMove = (e: React.MouseEvent) => handleMove(e.clientX);
+  const handleMouseUp = (e: React.MouseEvent) => handleUp(e.clientX);
+  const handleTouchStart = (e: React.TouchEvent) =>
+    handleDown(e.touches[0].clientX);
+  const handleTouchMove = (e: React.TouchEvent) =>
+    handleMove(e.touches[0].clientX);
+  const handleTouchEnd = (e: React.TouchEvent) =>
+    handleUp(e.changedTouches[0].clientX);
 
   return (
     <div
@@ -238,9 +253,12 @@ function Card({
         zIndex: idx,
       }}
       onClick={handleClick}
-      onMouseDown={handleDown}
-      onMouseMove={handleMove}
-      onMouseUp={handleUp}
+      onMouseDown={hadleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {color}
     </div>

@@ -6,20 +6,4 @@
   font-weight: bold;
   user-select: none;
   cursor: grab;
-
-  &.swipe {
-    animation: swipe 0.5s ease-in-out;
-  }
-}
-
-@keyframes swipe {
-  from {
-    opacity: 1;
-    transform: translate(0);
-  }
-
-  to {
-    opacity: 0;
-    transform: translate(100%);
-  }
 }
