@@ -49,9 +49,8 @@ function Card({
   const [cardStatus, setCardStatus] =
     useState<CardStatusType>('AUTO TRANSITION'); // 카드 상태
   const cardRef = useRef<HTMLDivElement>(null);
-  const startXRef = useRef(0); // Flip을 위한 스와이프 시작 위치
-  const startTimeRef = useRef(0); // Flip을 위한 스와이프 시작 시간
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined); // AUTO TRANSITION을 위한 setTimeout 레퍼런스
+  const movementHistory = useRef<{ x: number; t: number }[]>([]); // FLIP 속도 계산을 위한 이동 기록
   const { form, setForm } = useChangeHook({
     isSwiping: false, // 스와이프 진행 여부
     isSwiped: false, // 스와이프 여부 추적
@@ -91,8 +90,7 @@ function Card({
    * @returns {void}
    */
   const handleDown = (clientX: number): void => {
-    startXRef.current = clientX;
-    startTimeRef.current = Date.now();
+    movementHistory.current = [{ x: clientX, t: Date.now() }]; // 이동 기록 초기화
 
     setForm((prevState: KeyValueFormType) => ({
       ...prevState,
@@ -110,12 +108,21 @@ function Card({
   const handleMove = (clientX: number): void => {
     if (!!!form.isSwiping) return;
 
+    const now = Date.now();
+
+    // 이동 기록 추가
+    movementHistory.current.push({ x: clientX, t: now });
+    // 200ms 이상 과거 기록 제거
+    movementHistory.current = movementHistory.current.filter(
+      (p) => now - p.t <= 200,
+    );
+
     const dx = clientX - +form.startX;
 
     setForm((prevState: KeyValueFormType) => ({
       ...prevState,
       translateX: dx,
-      isSwiped: Math.abs(dx) > 3 ? true : false,
+      isSwiped: Math.abs(dx) > 3,
     }));
 
     // 스와이프 방향 설정
@@ -140,11 +147,16 @@ function Card({
    * @returns {void}
    */
   const handleUp = (clientX: number): void => {
-    const endTime = Date.now(); // 스와이프 종료 시간
+    const now = Date.now();
 
-    const dragDistance = clientX - startXRef.current; // 스와이프 이동 거리
-    const duration = endTime - startTimeRef.current; // 스와이프 동안 걸린 시간
-    const speed = Math.abs(dragDistance) / duration; // 스와이프 속도 px/ms
+    movementHistory.current.push({ x: clientX, t: now }); // 이동 종료 기록 추가
+
+    const firstRecord = movementHistory.current[0];
+    const lastRecord =
+      movementHistory.current[movementHistory.current.length - 1];
+    const deltaX = lastRecord.x - firstRecord.x;
+    const deltaT = lastRecord.t - firstRecord.t || 1;
+    const speed = Math.abs(deltaX / deltaT);
 
     setForm((prevState: KeyValueFormType) => ({
       ...prevState,
