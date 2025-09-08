@@ -28,7 +28,13 @@ $ npm run local
 
 ### Result
 
----
+##### **_- MOBILE_**
+
+![MOBILE](public/mobile.gif)<br>
+
+##### **_- PC_**
+
+## ![PC](public/pc.gif)
 
 ### Description
 
