@@ -123,7 +123,7 @@ function Card({
     setForm((prevState: KeyValueFormType) => ({
       ...prevState,
       translateX: dx,
-      isSwiped: Math.abs(dx) > 3,
+      isSwiped: Math.abs(dx) > 0,
     }));
 
     // 스와이프 방향 설정
@@ -135,11 +135,9 @@ function Card({
       if (position === 'top') useSetTopStatus({ topStatus: 'SWIPE LEFT' });
       else useSetBottomStatus({ bottomStatus: 'SWIPE LEFT' });
       setCardStatus('SWIPE LEFT');
-    } else {
-      if (position === 'top') useSetTopStatus({ topStatus: 'CANCEL' });
-      else useSetBottomStatus({ bottomStatus: 'CANCEL' });
-      setCardStatus('CANCEL');
     }
+
+    handleSetMovingCard(dx);
   };
 
   /**
@@ -152,7 +150,7 @@ function Card({
 
     movementHistory.current.push({ x: clientX, t: now }); // 이동 종료 기록 추가
 
-    const direction = +form.translateX > 0 ? 'right' : 'left'; // 스와이프 방향
+    const direction = +form.translateX > 0 ? 1 : -1; // 스와이프 방향 1: right, -1: left
     const firstRecord = movementHistory.current[0];
     const lastRecord =
       movementHistory.current[movementHistory.current.length - 1];
@@ -171,8 +169,7 @@ function Card({
      * else: 제자리
      */
     if (speed > SPEED_THRESHOLD) {
-      handleRemoveCardWithAnimation(position, direction === 'right' ? 1 : -1);
-      if (direction === 'right') {
+      if (direction === 1) {
         if (position === 'top') useSetTopStatus({ topStatus: 'FLIP RIGHT' });
         else useSetBottomStatus({ bottomStatus: 'FLIP RIGHT' });
         setCardStatus('FLIP RIGHT');
@@ -181,9 +178,9 @@ function Card({
         else useSetBottomStatus({ bottomStatus: 'FLIP LEFT' });
         setCardStatus('FLIP LEFT');
       }
+      handleRemoveCardWithAnimation(position, direction);
     } else if (Math.abs(+form.translateX) >= width / 2) {
-      handleRemoveCardWithAnimation(position, direction === 'right' ? 1 : -1);
-      if (direction === 'right') {
+      if (direction === 1) {
         if (position === 'top') useSetTopStatus({ topStatus: 'TO RIGHT' });
         else useSetBottomStatus({ bottomStatus: 'TO RIGHT' });
         setCardStatus('TO RIGHT');
@@ -192,6 +189,7 @@ function Card({
         else useSetBottomStatus({ bottomStatus: 'TO LEFT' });
         setCardStatus('TO LEFT');
       }
+      handleRemoveCardWithAnimation(position, direction);
     } else {
       setForm((prevState: KeyValueFormType) => ({
         ...prevState,
@@ -231,13 +229,14 @@ function Card({
     const card = cardRef.current;
 
     // transform + opacity transition 적용
+    card.style.transform = `translateX(${direction * width * 2}px)`;
     card.style.transition = 'transform 0.5s ease, opacity 0.5s ease';
-    card.style.transform = `translateX(${direction * width}px)`;
     card.style.opacity = '0';
 
     // transition 끝난 후 transitionend 이벤트 제거 및 onResetCard 실행
     const handleTransitionEnd = () => {
       card.removeEventListener('transitionend', handleTransitionEnd);
+      cardRef.current = null;
       onResetCard(position);
     };
 
@@ -249,17 +248,38 @@ function Card({
    * 카드 제자리 애니메이션
    * @returns {void}
    */
-  const handleSetDefaultCard = () => {
+  const handleSetDefaultCard = (): void => {
     if (!cardRef.current) return;
 
     const card = cardRef.current;
 
     // transform + opacity transition 적용
-    card.style.transform = `translateX(${-form.translateX}px)`;
+    card.style.transform = `translateX(0px)`;
     card.style.transition = 'transform 0.5s ease, opacity 0.5s ease';
     card.style.opacity = '1';
 
     // transition 끝난 후 transitionend 이벤트 제거
+    const handleTransitionEnd = () => {
+      card.removeEventListener('transitionend', handleTransitionEnd);
+    };
+
+    // transition 끝난 후 이벤트 실행
+    card.addEventListener('transitionend', handleTransitionEnd);
+  };
+
+  /**
+   * 카드 움직일 때 애니메이션 적용
+   * @param {number} dx 카드 이동거리
+   * @returns {void}
+   */
+  const handleSetMovingCard = (dx: number): void => {
+    if (!cardRef.current) return;
+
+    const card = cardRef.current;
+
+    card.style.transform = `translateX(${dx}px)`;
+    card.style.opacity = `${1 - Math.min(Math.abs(dx) / (width * 2), 1)}`;
+
     const handleTransitionEnd = () => {
       card.removeEventListener('transitionend', handleTransitionEnd);
     };
@@ -283,9 +303,6 @@ function Card({
       className={styles.wrap}
       ref={cardRef}
       style={{
-        transform: `translateX(${+form.translateX}px)`,
-        transition: !!form.isSwiped ? 'none' : 'transform 0.3s ease',
-        opacity: 1 - Math.min(Math.abs(+form.translateX) / 300, 1),
         width,
         height,
         background: color,
