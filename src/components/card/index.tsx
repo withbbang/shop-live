@@ -1,15 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { PropState } from 'middlewares/configureReducer';
-import { connect } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   CommonState,
-  useSetBottomStatus,
-  useSetTopStatus,
+  useSetCardsStatus,
 } from 'middlewares/reduxToolkits/commonSlice';
-import { Action } from 'redux-saga';
 import { useChangeHook } from 'utils/hooks';
 import {
   CardPositionType,
+  CardsStatusType,
   CardStatusType,
   KeyValueFormType,
 } from 'utils/types';
@@ -17,35 +16,18 @@ import { callCustomAlert } from 'utils/utils';
 import { AUTO_SWIPE_TIME, SPEED_THRESHOLD } from 'utils/constants';
 import styles from './Card.module.scss';
 
-const mapStateToProps = (state: PropState): CommonState => {
-  return {
-    ...state.common,
-  };
-};
-
-const mapDispatchToProps = (dispatch: (actionFunction: Action<any>) => any) => {
-  return {
-    useSetTopStatus: (payload: { topStatus: CardStatusType }): void => {
-      dispatch(useSetTopStatus(payload));
-    },
-    useSetBottomStatus: (payload: { bottomStatus: CardStatusType }): void => {
-      dispatch(useSetBottomStatus(payload));
-    },
-  };
-};
-
 function Card({
-  topStatus,
-  bottomStatus,
   position,
   color,
   width,
   height,
   idx,
   onResetCard,
-  useSetTopStatus,
-  useSetBottomStatus,
 }: CardProps): React.JSX.Element {
+  const dispatch = useDispatch();
+  const { top, bottom } = useSelector(
+    (state: PropState) => state.common.cardsStatus,
+  ) as CardsStatusType; // 전체 카드 상태
   const [cardStatus, setCardStatus] =
     useState<CardStatusType>('AUTO TRANSITION'); // 카드 상태
   const cardRef = useRef<HTMLDivElement>(null);
@@ -69,12 +51,7 @@ function Card({
     // 그 외엔 AUTO TRANSITION으로 설정 (단, 이미 AUTO TRANSITION 상태면 설정 X)
     else {
       timeoutRef.current = setTimeout(() => {
-        if (position === 'top' && topStatus !== 'AUTO TRANSITION')
-          useSetTopStatus({ topStatus: 'AUTO TRANSITION' });
-        if (position === 'bottom' && bottomStatus !== 'AUTO TRANSITION')
-          useSetBottomStatus({ bottomStatus: 'AUTO TRANSITION' });
-        if (cardStatus !== 'AUTO TRANSITION') setCardStatus('AUTO TRANSITION');
-        handleRemoveCardWithAnimation(position, 1);
+        handleSetCardStatus('AUTO TRANSITION');
       }, AUTO_SWIPE_TIME);
     }
 
@@ -85,6 +62,19 @@ function Card({
     };
   }, [idx, cardStatus]);
 
+  /**
+   * 카드 상태 설정, Redux 상태 동기화 및 애니메이션 설정
+   * @param {CardStatusType} status 카드 상태
+   */
+  const handleSetCardStatus = (
+    status: CardStatusType,
+    direction?: 1 | -1,
+    dx?: number,
+  ) => {
+    dispatch(useSetCardsStatus({ position, cardsStatus: status }));
+    setCardStatus(status);
+    handleSetAnimation(status, direction, dx);
+  };
   /**
    * 스와이프 시작
    * @param {number} clientX 이벤트 x 시작 좌표
@@ -127,22 +117,12 @@ function Card({
     }));
 
     // 스와이프 방향 설정
-    if (dx > 0) {
-      if (position === 'top') useSetTopStatus({ topStatus: 'SWIPE RIGHT' });
-      else useSetBottomStatus({ bottomStatus: 'SWIPE RIGHT' });
-      setCardStatus('SWIPE RIGHT');
-    } else if (dx < 0) {
-      if (position === 'top') useSetTopStatus({ topStatus: 'SWIPE LEFT' });
-      else useSetBottomStatus({ bottomStatus: 'SWIPE LEFT' });
-      setCardStatus('SWIPE LEFT');
-    } else {
-      if (position === 'top') useSetTopStatus({ topStatus: 'CANCEL' });
-      else useSetBottomStatus({ bottomStatus: 'CANCEL' });
-      setCardStatus('CANCEL');
+    if (dx > 0) handleSetCardStatus('SWIPE RIGHT', undefined, dx);
+    else if (dx < 0) handleSetCardStatus('SWIPE LEFT', undefined, dx);
+    else {
+      handleSetCardStatus('CANCEL');
       return;
     }
-
-    handleSetMovingCard(dx);
   };
 
   /**
@@ -174,37 +154,18 @@ function Card({
      * else: 제자리
      */
     if (speed > SPEED_THRESHOLD) {
-      if (direction === 1) {
-        if (position === 'top') useSetTopStatus({ topStatus: 'FLIP RIGHT' });
-        else useSetBottomStatus({ bottomStatus: 'FLIP RIGHT' });
-        setCardStatus('FLIP RIGHT');
-      } else {
-        if (position === 'top') useSetTopStatus({ topStatus: 'FLIP LEFT' });
-        else useSetBottomStatus({ bottomStatus: 'FLIP LEFT' });
-        setCardStatus('FLIP LEFT');
-      }
-      handleRemoveCardWithAnimation(position, direction);
+      if (direction === 1) handleSetCardStatus('FLIP RIGHT', direction);
+      else handleSetCardStatus('FLIP LEFT', direction);
     } else if (Math.abs(+form.translateX) >= width / 2) {
-      if (direction === 1) {
-        if (position === 'top') useSetTopStatus({ topStatus: 'TO RIGHT' });
-        else useSetBottomStatus({ bottomStatus: 'TO RIGHT' });
-        setCardStatus('TO RIGHT');
-      } else {
-        if (position === 'top') useSetTopStatus({ topStatus: 'TO LEFT' });
-        else useSetBottomStatus({ bottomStatus: 'TO LEFT' });
-        setCardStatus('TO LEFT');
-      }
-      handleRemoveCardWithAnimation(position, direction);
+      if (direction === 1) handleSetCardStatus('TO RIGHT', direction);
+      else handleSetCardStatus('TO LEFT', direction);
     } else {
       setForm((prevState: KeyValueFormType) => ({
         ...prevState,
         translateX: 0,
       }));
 
-      if (position === 'top') useSetTopStatus({ topStatus: 'CANCEL' });
-      else useSetBottomStatus({ bottomStatus: 'CANCEL' });
-      setCardStatus('CANCEL');
-      handleSetDefaultCard();
+      handleSetCardStatus('CANCEL');
     }
   };
 
@@ -217,77 +178,64 @@ function Card({
 
     callCustomAlert(color);
 
-    if (position === 'top') useSetTopStatus({ topStatus: 'CLICK' });
-    else useSetBottomStatus({ bottomStatus: 'CLICK' });
-    setCardStatus('CLICK');
+    handleSetCardStatus('CLICK');
   };
 
   /**
-   * 카드 제거 애니메이션 실행 후 onResetCard 호출
+   * 카드 애니메이션
+   * @param {CardStatusType} status 카드 상태
+   * @param {1 | -1 | undefined} direction 스와이프 방향 1: right, -1: left
+   * @param {number | undefined} dx 스와이프 이동 거리
+   * @returns {void}
    */
-  const handleRemoveCardWithAnimation = (
-    position: CardPositionType,
-    direction: 1 | -1, // 1: right, -1: left
+  const handleSetAnimation = (
+    status: CardStatusType,
+    direction?: 1 | -1,
+    dx?: number,
   ) => {
     if (!cardRef.current) return;
 
     const card = cardRef.current;
 
     // transform + opacity transition 적용
-    card.style.transform = `translateX(${direction * width * 2}px)`;
-    card.style.transition = 'transform 0.5s ease, opacity 0.5s ease';
-    card.style.opacity = '0';
+    switch (status) {
+      case 'AUTO TRANSITION':
+      case 'TO LEFT':
+      case 'TO RIGHT':
+      case 'FLIP LEFT':
+      case 'FLIP RIGHT':
+        card.style.transform = `translateX(${(direction ?? 1) * width * 2}px)`;
+        card.style.transition = 'transform 0.5s ease, opacity 0.5s ease';
+        card.style.opacity = '0';
+        break;
+      case 'SWIPE LEFT':
+      case 'SWIPE RIGHT':
+        card.style.transform = `translateX(${dx ?? 0}px)`;
+        card.style.transition = 'none';
+        card.style.opacity = `${1 - Math.min(Math.abs(dx ?? 0) / (width * 2), 1)}`;
+        break;
+      case 'CANCEL':
+        card.style.transform = `translateX(0px)`;
+        card.style.transition = 'transform 0.5s ease, opacity 0.5s ease';
+        card.style.opacity = '1';
+        break;
+      default:
+        return;
+    }
 
     // transition 끝난 후 transitionend 이벤트 제거 및 onResetCard 실행
     const handleTransitionEnd = () => {
       card.removeEventListener('transitionend', handleTransitionEnd);
+
+      if (
+        status === 'SWIPE LEFT' ||
+        status === 'SWIPE RIGHT' ||
+        status === 'CANCEL'
+      )
+        return;
+
       cardRef.current = null;
       onResetCard(position);
-    };
-
-    // transition 끝난 후 이벤트 실행
-    card.addEventListener('transitionend', handleTransitionEnd);
-  };
-
-  /**
-   * 카드 제자리 애니메이션
-   * @returns {void}
-   */
-  const handleSetDefaultCard = (): void => {
-    if (!cardRef.current) return;
-
-    const card = cardRef.current;
-
-    // transform + opacity transition 적용
-    card.style.transform = `translateX(0px)`;
-    card.style.transition = 'transform 0.5s ease, opacity 0.5s ease';
-    card.style.opacity = '1';
-
-    // transition 끝난 후 transitionend 이벤트 제거
-    const handleTransitionEnd = () => {
-      card.removeEventListener('transitionend', handleTransitionEnd);
-    };
-
-    // transition 끝난 후 이벤트 실행
-    card.addEventListener('transitionend', handleTransitionEnd);
-  };
-
-  /**
-   * 카드 움직일 때 애니메이션 적용
-   * @param {number} dx 카드 이동거리
-   * @returns {void}
-   */
-  const handleSetMovingCard = (dx: number): void => {
-    if (!cardRef.current) return;
-
-    const card = cardRef.current;
-
-    card.style.transform = `translateX(${dx}px)`;
-    card.style.transition = 'none';
-    card.style.opacity = `${1 - Math.min(Math.abs(dx) / (width * 2), 1)}`;
-
-    const handleTransitionEnd = () => {
-      card.removeEventListener('transitionend', handleTransitionEnd);
     };
 
     // transition 끝난 후 이벤트 실행
@@ -338,4 +286,4 @@ interface CardProps extends CommonState {
   useSetBottomStatus: (payload: { bottomStatus: CardStatusType }) => void;
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Card);
+export default Card;

@@ -31,3 +31,11 @@ export type CardStatusType =
   | 'AUTO TRANSITION'
   | 'CLICK'
   | 'CANCEL';
+
+/**
+ * 전체 카드 상태 타입
+ */
+export type CardsStatusType = {
+  top: CardStatusType;
+  bottom: CardStatusType;
+};

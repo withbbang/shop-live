@@ -11,4 +11,4 @@ export const AUTO_SWIPE_TIME = 3000;
 /**
  * Flip 기준 속도 px/ms (조절 가능)
  */
-export const SPEED_THRESHOLD = 0.3;
+export const SPEED_THRESHOLD = 0.25;

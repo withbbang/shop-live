@@ -1,5 +1,10 @@
 import React from 'react';
-import { CardPositionType, CardStatusType, CardType } from 'utils/types';
+import {
+  CardPositionType,
+  CardsStatusType,
+  CardStatusType,
+  CardType,
+} from 'utils/types';
 import CardBox from 'components/cardBox';
 import {
   BOTTOM_CARD_HEIGHT,
@@ -10,8 +15,7 @@ import {
 import styles from './Index.module.scss';
 
 function IndexPT({
-  topStatus,
-  bottomStatus,
+  cardsStatus,
   topCards,
   bottomCards,
   onResetCard,
@@ -19,7 +23,7 @@ function IndexPT({
   return (
     <div className={styles.wrap}>
       <div className={styles.box}>
-        <p>{topStatus}</p>
+        <p>{cardsStatus?.top}</p>
         <CardBox
           position={'top'}
           cards={topCards}
@@ -31,7 +35,7 @@ function IndexPT({
       <br />
       <br />
       <div className={styles.box}>
-        <p>{bottomStatus}</p>
+        <p>{cardsStatus?.bottom}</p>
         <CardBox
           position={'bottom'}
           cards={bottomCards}
@@ -45,8 +49,7 @@ function IndexPT({
 }
 
 interface IndexPTProps {
-  topStatus?: CardStatusType;
-  bottomStatus?: CardStatusType;
+  cardsStatus?: CardsStatusType;
   topCards: CardType[];
   bottomCards: CardType[];
   onResetCard: (pos: CardPositionType) => void;

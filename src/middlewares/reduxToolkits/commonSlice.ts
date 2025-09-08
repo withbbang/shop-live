@@ -1,29 +1,31 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { CardStatusType } from 'utils/types';
+import { CardsStatusType, CardStatusType } from 'utils/types';
 
 export interface CommonState {
-  topStatus?: CardStatusType;
-  bottomStatus?: CardStatusType;
+  cardsStatus?: CardsStatusType;
 }
 
 export const initialState: CommonState = {
-  topStatus: 'AUTO TRANSITION',
-  bottomStatus: 'AUTO TRANSITION',
+  cardsStatus: { top: 'AUTO TRANSITION', bottom: 'AUTO TRANSITION' },
 };
 
 const commonSlice = createSlice({
   name: 'common',
   initialState,
   reducers: {
-    useSetTopStatus(state: CommonState, action) {
-      state.topStatus = action.payload.topStatus;
-    },
-    useSetBottomStatus(state: CommonState, action) {
-      state.bottomStatus = action.payload.bottomStatus;
+    useSetCardsStatus(
+      state: CommonState,
+      action: {
+        payload: { position: 'top' | 'bottom'; cardsStatus: CardStatusType };
+      },
+    ) {
+      if (state.cardsStatus) {
+        state.cardsStatus[action.payload.position] = action.payload.cardsStatus;
+      }
     },
   },
 });
 
-export const { useSetTopStatus, useSetBottomStatus } = commonSlice.actions;
+export const { useSetCardsStatus } = commonSlice.actions;
 
 export default commonSlice.reducer;

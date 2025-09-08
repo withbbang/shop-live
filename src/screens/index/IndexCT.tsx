@@ -4,16 +4,14 @@ import { CardType, CardPositionType } from 'utils/types';
 import { createCard } from 'utils/utils';
 import IndexPT from './IndexPT';
 
-function IndexCT({ topStatus, bottomStatus }: IndexCTProps): React.JSX.Element {
+function IndexCT({ cardsStatus }: IndexCTProps): React.JSX.Element {
   const [topCards, setTopCards] = useState<CardType[]>([]); // 위 카드 리스트
   const [bottomCards, setBottomCards] = useState<CardType[]>([]); // 아래 카드 리스트
 
   useEffect(() => {
     // 카드 초기화
-    [0, 0].forEach(() => {
-      setTopCards((prev) => [...prev, createCard()]);
-      setBottomCards((prev) => [...prev, createCard()]);
-    });
+    setTopCards([createCard(), createCard()]);
+    setBottomCards([createCard(), createCard()]);
   }, []);
 
   /**
@@ -21,14 +19,13 @@ function IndexCT({ topStatus, bottomStatus }: IndexCTProps): React.JSX.Element {
    * @param {CardPositionType} pos 카드 위치
    */
   const handleResetCard = (pos: CardPositionType) => {
-    if (pos === 'top') setTopCards((prev) => [createCard(), { ...prev[0] }]);
-    else setBottomCards((prev) => [createCard(), { ...prev[0] }]);
+    if (pos === 'top') setTopCards((prev) => [createCard(), prev[0]]);
+    else setBottomCards((prev) => [createCard(), prev[0]]);
   };
 
   return (
     <IndexPT
-      topStatus={topStatus}
-      bottomStatus={bottomStatus}
+      cardsStatus={cardsStatus}
       topCards={topCards}
       bottomCards={bottomCards}
       onResetCard={handleResetCard}
