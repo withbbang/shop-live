@@ -135,6 +135,11 @@ function Card({
       if (position === 'top') useSetTopStatus({ topStatus: 'SWIPE LEFT' });
       else useSetBottomStatus({ bottomStatus: 'SWIPE LEFT' });
       setCardStatus('SWIPE LEFT');
+    } else {
+      if (position === 'top') useSetTopStatus({ topStatus: 'CANCEL' });
+      else useSetBottomStatus({ bottomStatus: 'CANCEL' });
+      setCardStatus('CANCEL');
+      return;
     }
 
     handleSetMovingCard(dx);
@@ -278,6 +283,7 @@ function Card({
     const card = cardRef.current;
 
     card.style.transform = `translateX(${dx}px)`;
+    card.style.transition = 'none';
     card.style.opacity = `${1 - Math.min(Math.abs(dx) / (width * 2), 1)}`;
 
     const handleTransitionEnd = () => {
