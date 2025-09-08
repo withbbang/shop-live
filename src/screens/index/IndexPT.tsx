@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  CardPositionType,
-  CardsStatusType,
-  CardStatusType,
-  CardType,
-} from 'utils/types';
+import { CardPositionType, CardsStatusType, CardType } from 'utils/types';
 import CardBox from 'components/cardBox';
 import {
   BOTTOM_CARD_HEIGHT,

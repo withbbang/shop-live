@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { PropState } from 'middlewares/configureReducer';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import {
   CommonState,
   useSetCardsStatus,
@@ -8,7 +7,6 @@ import {
 import { useChangeHook } from 'utils/hooks';
 import {
   CardPositionType,
-  CardsStatusType,
   CardStatusType,
   KeyValueFormType,
 } from 'utils/types';
@@ -25,9 +23,6 @@ function Card({
   onResetCard,
 }: CardProps): React.JSX.Element {
   const dispatch = useDispatch();
-  const { top, bottom } = useSelector(
-    (state: PropState) => state.common.cardsStatus,
-  ) as CardsStatusType; // 전체 카드 상태
   const [cardStatus, setCardStatus] =
     useState<CardStatusType>('AUTO TRANSITION'); // 카드 상태
   const cardRef = useRef<HTMLDivElement>(null);
@@ -65,12 +60,15 @@ function Card({
   /**
    * 카드 상태 설정, Redux 상태 동기화 및 애니메이션 설정
    * @param {CardStatusType} status 카드 상태
+   * @param {1 | -1 | undefined} direction 스와이프 방향 1: right, -1: left
+   * @param {number | undefined} dx 스와이프 이동 거리
+   * @returns {void}
    */
   const handleSetCardStatus = (
     status: CardStatusType,
     direction?: 1 | -1,
     dx?: number,
-  ) => {
+  ): void => {
     dispatch(useSetCardsStatus({ position, cardsStatus: status }));
     setCardStatus(status);
     handleSetAnimation(status, direction, dx);
@@ -156,17 +154,21 @@ function Card({
     if (speed > SPEED_THRESHOLD) {
       if (direction === 1) handleSetCardStatus('FLIP RIGHT', direction);
       else handleSetCardStatus('FLIP LEFT', direction);
-    } else if (Math.abs(+form.translateX) >= width / 2) {
+      return;
+    }
+
+    if (Math.abs(+form.translateX) >= width / 2) {
       if (direction === 1) handleSetCardStatus('TO RIGHT', direction);
       else handleSetCardStatus('TO LEFT', direction);
-    } else {
-      setForm((prevState: KeyValueFormType) => ({
-        ...prevState,
-        translateX: 0,
-      }));
-
-      handleSetCardStatus('CANCEL');
+      return;
     }
+
+    setForm((prevState: KeyValueFormType) => ({
+      ...prevState,
+      translateX: 0,
+    }));
+
+    handleSetCardStatus('CANCEL');
   };
 
   /**
@@ -192,7 +194,7 @@ function Card({
     status: CardStatusType,
     direction?: 1 | -1,
     dx?: number,
-  ) => {
+  ): void => {
     if (!cardRef.current) return;
 
     const card = cardRef.current;
@@ -238,7 +240,7 @@ function Card({
       onResetCard(position);
     };
 
-    // transition 끝난 후 이벤트 실행
+    // transition 끝난 후 제거 이벤트 실행
     card.addEventListener('transitionend', handleTransitionEnd);
   };
 

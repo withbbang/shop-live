@@ -1,4 +1,4 @@
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { KeyValueFormType } from './types';
 
 /**
@@ -26,23 +26,4 @@ export function useChangeHook(keyValueFormType: KeyValueFormType) {
   );
 
   return { form, setForm, useChange };
-}
-
-export function useIntervalHook(callback: Function, delay: number | null) {
-  const savedCallback = useRef<Function>(null);
-
-  useEffect(() => {
-    savedCallback.current = callback;
-  }, [callback]);
-
-  useEffect(() => {
-    function tick() {
-      if (savedCallback.current) savedCallback.current();
-    }
-
-    if (delay !== null) {
-      let id = setInterval(tick, delay);
-      return () => clearInterval(id);
-    }
-  }, [delay]);
 }
