@@ -59,20 +59,21 @@ function Card({
 
   /**
    * 카드 상태 설정, Redux 상태 동기화 및 애니메이션 설정
-   * @param {CardStatusType} status 카드 상태
+   * @param {CardStatusType} cardsStatus 카드 상태
    * @param {1 | -1 | undefined} direction 스와이프 방향 1: right, -1: left
    * @param {number | undefined} dx 스와이프 이동 거리
    * @returns {void}
    */
   const handleSetCardStatus = (
-    status: CardStatusType,
+    cardsStatus: CardStatusType,
     direction?: 1 | -1,
     dx?: number,
   ): void => {
-    dispatch(useSetCardsStatus({ position, cardsStatus: status }));
-    setCardStatus(status);
-    handleSetAnimation(status, direction, dx);
+    dispatch(useSetCardsStatus({ position, cardsStatus }));
+    setCardStatus(cardsStatus);
+    handleSetAnimation(cardsStatus, direction, dx);
   };
+
   /**
    * 스와이프 시작
    * @param {number} clientX 이벤트 x 시작 좌표
@@ -185,13 +186,13 @@ function Card({
 
   /**
    * 카드 애니메이션
-   * @param {CardStatusType} status 카드 상태
+   * @param {CardStatusType} cardsStatus 카드 상태
    * @param {1 | -1 | undefined} direction 스와이프 방향 1: right, -1: left
    * @param {number | undefined} dx 스와이프 이동 거리
    * @returns {void}
    */
   const handleSetAnimation = (
-    status: CardStatusType,
+    cardsStatus: CardStatusType,
     direction?: 1 | -1,
     dx?: number,
   ): void => {
@@ -200,7 +201,7 @@ function Card({
     const card = cardRef.current;
 
     // transform + opacity transition 적용
-    switch (status) {
+    switch (cardsStatus) {
       case 'AUTO TRANSITION':
       case 'TO LEFT':
       case 'TO RIGHT':
