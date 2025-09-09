@@ -284,8 +284,6 @@ interface CardProps extends CommonState {
   height: number;
   idx: number;
   onResetCard: (pos: CardPositionType) => void;
-  useSetTopStatus: (payload: { topStatus: CardStatusType }) => void;
-  useSetBottomStatus: (payload: { bottomStatus: CardStatusType }) => void;
 }
 
 export default Card;
